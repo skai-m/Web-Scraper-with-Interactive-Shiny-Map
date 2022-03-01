@@ -11,7 +11,7 @@ const cheerio = require("cheerio")
 
 // var URL = "https://www.indeed.com/jobs?";
 
-var URL = "https://www.indeed.com/jobs?l=New%20York%2C%20NY&radius=0"
+var URL = "https://www.indeed.com/jobs?q&l=California"
 
 // q = "what"
 // l = "where%20where%2Cstate"
@@ -30,6 +30,7 @@ const cities = [];
 // salary range
 // description
 
+// get the data from the web
 const jobScrape = async() => {
     try {
         const response = await
@@ -38,14 +39,34 @@ const jobScrape = async() => {
 
         const $ = cheerio.load(html);
 
-        const jobTitles = [];
+        // initialize Job class
+        class Job  {
+            constructor(title, company, location, pay) {
+                this.jobTitle = title;
+                this.jobCompany = company;
+                this.location = location;
+                this.payRange = pay;
+            }
+        }
 
-        $("div > h2 > span").each((_idx, el) => {
-            const title = $(el).prop("title");
-            jobTitles.push(title)
+        // initialize jobs array
+        const jobs = [];
+
+        $("h2 > div").remove();
+
+        $("div > table > tbody").each((_idx, el) => {
+            console.log($(el).find("h2").text());
+            const title = $("h2").text();
+            const company = $("div > span.companyName").text();
+            const location = $("div.companyLocation").text();
+            const pay = $("div.metadata salary-snippet-container > div.attribute_snippet").text();
+
+            localJob = new Job(title, company, location, pay);
+            
+            jobs.push(localJob);
         });
 
-        return jobTitles;
+        return jobs;
     } catch(error) {
         throw error;
     }
@@ -53,4 +74,4 @@ const jobScrape = async() => {
 
 // function for exporting objects as JSON
 
-jobScrape().then((jobTitles) => console.log(jobTitles));
+jobScrape().then((jobs) => console.log("done"));
