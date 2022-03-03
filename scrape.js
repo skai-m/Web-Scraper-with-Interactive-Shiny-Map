@@ -1,6 +1,6 @@
 /**
  * Author: Safiyyah Muhammad
- * Last Updated: 03/01/2022
+ * Last Updated: 03/02/2022
  * CSCI:290 | Final Project
  * Indeed Job Search Results Web Scraper
  */
@@ -9,7 +9,7 @@
 const axios = require("axios");
 const cheerio = require("cheerio")
 
-// var URL = "https://www.indeed.com/jobs?";
+// base URL -> "https://www.indeed.com/jobs?";
 
 var URL = "https://www.indeed.com/jobs?q&l=California"
 
@@ -23,13 +23,6 @@ const cities = [];
 
 // begin function
 
-// ideally, I want to create objects with:
-// job title
-// city, state
-// company name
-// salary range
-// description
-
 // get the data from the web
 const jobScrape = async() => {
     try {
@@ -41,10 +34,12 @@ const jobScrape = async() => {
 
         // initialize Job class
         class Job  {
-            constructor(title, company, location, pay) {
+            constructor(title, company, city, state, zip, pay) {
                 this.jobTitle = title;
                 this.jobCompany = company;
-                this.location = location;
+                this.city = city;
+                this.state = state;
+                this.zip = zip;
                 this.payRange = pay;
             }
         }
@@ -56,14 +51,36 @@ const jobScrape = async() => {
 
         $("div > table > tbody").each((_idx, el) => {
             //console.log($(el).find("h2").text());
-            const title = $(el).find("h2").text();
-            const company = $(el).find("div > span.companyName").text();
-            const location = $(el).find("div.companyLocation").text();
-            const pay = $(el).find("div.metadata\.salary-snippet-container > div.attribute_snippet").text();
+            let title = $(el).find("h2").text();
+            let company = $(el).find("div > span.companyName").text();
+            let location = $(el).find("div.companyLocation").text();
+            let pay = $(el).find("div.metadata\.salary-snippet-container > div.attribute_snippet").text();
 
-            localJob = new Job(title, company, location, pay);
+            let index = location.indexOf("+");
+            if(index != -1) {
+                location = location.substring(0, index)
+            }
+
+            let regex = [/\w+\s?\w*/, /[A-Z][A-Z]/, /\d\d\d\d\d/];
+
+            let city = location.match(regex[0]); 
+            if(city) {
+                city = city[0];
+            }
             
-            jobs.push(localJob);
+            let state = location.match(regex[1]);
+            if(state) {
+                state = state[0];
+            } 
+            
+            let zip = location.match(regex[2]);
+            if(zip) {
+                zip = zip[0];
+            }
+
+            //localJob = new Job(title, company, city, state, zip, pay);
+            
+            jobs.push(new Job(title, company, city, state, zip, pay));
         });
 
         return jobs;
@@ -75,3 +92,4 @@ const jobScrape = async() => {
 // function for exporting objects as JSON
 
 jobScrape().then((jobs) => console.log(jobs));
+// jobScrape().then((jobs) => console.log(JSON.stringify(jobs)));
