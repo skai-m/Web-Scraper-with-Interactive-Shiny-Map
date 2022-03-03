@@ -1,6 +1,6 @@
 /**
  * Author: Safiyyah Muhammad
- * Last Updated: 02/21/2022
+ * Last Updated: 03/01/2022
  * CSCI:290 | Final Project
  * Indeed Job Search Results Web Scraper
  */
@@ -55,11 +55,11 @@ const jobScrape = async() => {
         $("h2 > div").remove();
 
         $("div > table > tbody").each((_idx, el) => {
-            console.log($(el).find("h2").text());
-            const title = $("h2").text();
-            const company = $("div > span.companyName").text();
-            const location = $("div.companyLocation").text();
-            const pay = $("div.metadata salary-snippet-container > div.attribute_snippet").text();
+            //console.log($(el).find("h2").text());
+            const title = $(el).find("h2").text();
+            const company = $(el).find("div > span.companyName").text();
+            const location = $(el).find("div.companyLocation").text();
+            const pay = $(el).find("div.metadata\.salary-snippet-container > div.attribute_snippet").text();
 
             localJob = new Job(title, company, location, pay);
             
@@ -74,4 +74,4 @@ const jobScrape = async() => {
 
 // function for exporting objects as JSON
 
-jobScrape().then((jobs) => console.log("done"));
+jobScrape().then((jobs) => console.log(jobs));
