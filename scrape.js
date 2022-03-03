@@ -49,8 +49,7 @@ const jobScrape = async() => {
 
         $("h2 > div").remove();
 
-        $("div > table > tbody").each((_idx, el) => {
-            //console.log($(el).find("h2").text());
+        $("div > table > tbody > tr > td.resultContent").each((_idx, el) => {
             let title = $(el).find("h2").text();
             let company = $(el).find("div > span.companyName").text();
             let location = $(el).find("div.companyLocation").text();
@@ -61,11 +60,16 @@ const jobScrape = async() => {
                 location = location.substring(0, index)
             }
 
-            let regex = [/\w+\s?\w*/, /[A-Z][A-Z]/, /\d\d\d\d\d/];
+            let regex = [/\w+\s?\w*/, /[A-Z][A-Z]/, /\d{5}/];
 
             let city = location.match(regex[0]); 
             if(city) {
                 city = city[0];
+            }
+
+            // removes the city field from jobs specified as "Remote"
+            if(city == "Remote" | "Remote in") {
+                city = "";
             }
             
             let state = location.match(regex[1]);
