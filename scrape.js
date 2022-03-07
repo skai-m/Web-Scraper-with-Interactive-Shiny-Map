@@ -25,13 +25,15 @@ var URL = getURL + start;
 const cities = [];
 
 class Job  {
-    constructor(title, company, city, state, zip, pay) {
+    constructor(title, company, city, state, zip, payLow, payHigh, payType) {
         this.jobTitle = title;
         this.jobCompany = company;
         this.city = city;
         this.state = state;
         this.zip = zip;
-        this.payRange = pay;
+        this.payLow = payLow;
+        this.payHigh = payHigh;
+        this.payType = payType;
     }
 }
 
@@ -69,24 +71,60 @@ const jobScrape = async() => {
                     location = location.substring(0, index)
                 }
 
+                title = title.split("-")[0].trim()
+                while(title.search(",") != -1) {
+                    title = title.replace(",", "");
+                }
+
                 let regex = [/\w+\s?\w*/, /[A-Z][A-Z]/, /\d{5}/];
 
                 let city = location.match(regex[0]); 
                 if(city) {
                     city = city[0];
+                } else {
+                    city = "null";
+                }
+
+                while(company.search(",") != -1) {
+                    company = company.replace(",", "");
                 }
                 
                 let state = location.match(regex[1]);
                 if(state) {
                     state = state[0];
-                } 
+                } else {
+                    state = "null";
+                }
                 
                 let zip = location.match(regex[2]);
                 if(zip) {
                     zip = zip[0];
+                } else {
+                    zip = "null";
                 }
 
-                jobs.push(new Job(title, company, city, state, zip, pay));
+                if(!pay) {
+                    payLow = 0;
+                    payHigh = 0;
+                    payType = "null";
+                } else {
+                    let payArray = pay.split(" ");
+                    for(payIndex in payArray) {
+                        payArray[payIndex] = payArray[payIndex].replace("$", "");
+                        payArray[payIndex] = payArray[payIndex].replace(",", "");
+                    };
+                    if(payArray.length == 5) {
+                    payLow = payArray[0];
+                    payHigh = payArray[2];
+                    payType = payArray[4];
+                    } else {
+                    payLow = payArray[0];
+                    payHigh = payArray[0];
+                    payType = payArray[2];
+                    };
+                }
+                
+                jobs.push(new Job(title, company, city, state, zip, payLow, payHigh, payType));
             });
             i++;
             start = "&start=" + i + "0";
@@ -105,7 +143,37 @@ function getPages(str) {
     return  Math.ceil((parseInt(splitResults.replace(",", "")) / n));
 }
 
-jobScrape().then((jobs) => console.log(jobs));
-// jobScrape().then((jobs) => console.log(JSON.stringify(jobs)));
+function toStringCsv(arr) {
+    const objArray = arr;
 
-jobScrape().then((jobs) => exportToJson(jobs));
+    const csvString = [
+        [
+            "title",
+            "company",
+            "city",
+            "state",
+            "zipcode",
+            "payLow",
+            "payHigh",
+            "payType"
+        ],
+        ...objArray.map(job => [
+            job.jobTitle,
+            job.jobCompany,
+            job.city,
+            job.state,
+            job.zip,
+            job.payLow,
+            job.payHigh,
+            job.payType
+         ])
+        ]
+        .map(e => e.join(","))
+        .join("\n");
+
+        console.log(csvString);
+}
+
+// jobScrape().then((jobs) => console.log(jobs));
+// jobScrape().then((jobs) => console.log(JSON.stringify(jobs)));
+   jobScrape().then((jobs) => toStringCsv(jobs));
