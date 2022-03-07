@@ -1,6 +1,6 @@
 /**
  * Author: Safiyyah Muhammad
- * Last Updated: 03/02/2022
+ * Last Updated: 03/07/2022
  * CSCI:290 | Final Project
  * Indeed Job Search Results Web Scraper
  */
@@ -21,8 +21,11 @@ var URL = "https://www.indeed.com/jobs?q&l=California"
 
 const cities = [];
 
+var i = "";
 // begin function
+do {
 
+} while(i < 5)
 // get the data from the web
 const jobScrape = async() => {
     try {
@@ -46,6 +49,14 @@ const jobScrape = async() => {
 
         // initialize jobs array
         const jobs = [];
+
+        // get number of pages
+
+        const resultString = $("div > div#searchCountPages").text().trim();
+        // resultsString = "Page 1 of n jobs"
+        numPages = getPages(resultString);
+        console.log("numPages = " + numPages);
+       
 
         $("h2 > div").remove();
 
@@ -93,7 +104,14 @@ const jobScrape = async() => {
     }
 };
 
+function getPages(str) {
+    const n = 15;
+    let splitResults = str.split(" ")[3];
+    return  Math.ceil((parseInt(splitResults.replace(",", "")) / n));
+}
+
 // function for exporting objects as JSON
 
-jobScrape().then((jobs) => console.log(jobs));
+jobScrape().then((jobs) => console.log("Done"));
+// jobScrape().then((jobs) => console.log(jobs));
 // jobScrape().then((jobs) => console.log(JSON.stringify(jobs)));
