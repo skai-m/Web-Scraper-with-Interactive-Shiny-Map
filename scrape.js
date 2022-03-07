@@ -4,14 +4,17 @@
  * CSCI:290 | Final Project
  * Indeed Job Search Results Web Scraper
  */
-// set up environment variables
 
+
+
+// set up environment variables
 const axios = require("axios");
 const cheerio = require("cheerio")
 
 // base URL -> "https://www.indeed.com/jobs?";
-
-var URL = "https://www.indeed.com/jobs?q&l=California"
+const getURL = "https://www.indeed.com/jobs?q&l=California"
+var start = "";
+var URL = getURL + start;
 
 // q = "what"
 // l = "where%20where%2Cstate"
@@ -21,87 +24,79 @@ var URL = "https://www.indeed.com/jobs?q&l=California"
 
 const cities = [];
 
-var i = "";
-// begin function
-do {
+class Job  {
+    constructor(title, company, city, state, zip, pay) {
+        this.jobTitle = title;
+        this.jobCompany = company;
+        this.city = city;
+        this.state = state;
+        this.zip = zip;
+        this.payRange = pay;
+    }
+}
 
-} while(i < 5)
-// get the data from the web
+const jobs = [];
+const resultString = "";
+
+var i = 0;
+const n = 5;
+// begin function
 const jobScrape = async() => {
     try {
-        const response = await
-        axios.get(URL);
-        const html = response.data;
-
-        const $ = cheerio.load(html);
-
-        // initialize Job class
-        class Job  {
-            constructor(title, company, city, state, zip, pay) {
-                this.jobTitle = title;
-                this.jobCompany = company;
-                this.city = city;
-                this.state = state;
-                this.zip = zip;
-                this.payRange = pay;
-            }
-        }
-
-        // initialize jobs array
-        const jobs = [];
-
-        // get number of pages
-
-        const resultString = $("div > div#searchCountPages").text().trim();
-        // resultsString = "Page 1 of n jobs"
-        numPages = getPages(resultString);
-        console.log("numPages = " + numPages);
-       
-
-        $("h2 > div").remove();
-
-        $("div > table > tbody > tr > td.resultContent").each((_idx, el) => {
-            let title = $(el).find("h2").text();
-            let company = $(el).find("div > span.companyName").text();
-            let location = $(el).find("div.companyLocation").text();
-            let pay = $(el).find("div.metadata\.salary-snippet-container > div.attribute_snippet").text();
-
-            let index = location.indexOf("+");
-            if(index != -1) {
-                location = location.substring(0, index)
-            }
-
-            let regex = [/\w+\s?\w*/, /[A-Z][A-Z]/, /\d{5}/];
-
-            let city = location.match(regex[0]); 
-            if(city) {
-                city = city[0];
-            }
-
-            // removes the city field from jobs specified as "Remote"
-            if(city == "Remote" | "Remote in") {
-                city = "";
-            }
+        do {
+            const response = await
+            // get the data from the web
             
-            let state = location.match(regex[1]);
-            if(state) {
-                state = state[0];
-            } 
-            
-            let zip = location.match(regex[2]);
-            if(zip) {
-                zip = zip[0];
-            }
+            axios.get(URL);
+            const html = response.data;
 
-            //localJob = new Job(title, company, city, state, zip, pay);
-            
-            jobs.push(new Job(title, company, city, state, zip, pay));
-        });
+            const $ = cheerio.load(html);
 
+            // resultString = $("div > div#searchCountPages").text().trim();
+            // resultsString = "Page 1 of n jobs"
+            // numPages = getPages(resultString);
+
+            $("h2 > div").remove();
+
+            $("div > table > tbody > tr > td.resultContent").each((_idx, el) => {
+                let title = $(el).find("h2").text();
+                let company = $(el).find("div > span.companyName").text();
+                let location = $(el).find("div.companyLocation").text();
+                let pay = $(el).find("div.metadata\.salary-snippet-container > div.attribute_snippet").text();
+
+                let index = location.indexOf("+");
+                if(index != -1) {
+                    location = location.substring(0, index)
+                }
+
+                let regex = [/\w+\s?\w*/, /[A-Z][A-Z]/, /\d{5}/];
+
+                let city = location.match(regex[0]); 
+                if(city) {
+                    city = city[0];
+                }
+                
+                let state = location.match(regex[1]);
+                if(state) {
+                    state = state[0];
+                } 
+                
+                let zip = location.match(regex[2]);
+                if(zip) {
+                    zip = zip[0];
+                }
+
+                jobs.push(new Job(title, company, city, state, zip, pay));
+            });
+            i++;
+            start = "&start=" + i + "0";
+            URL = getURL + start;
+        } while(i < n);
         return jobs;
     } catch(error) {
         throw error;
     }
+    
 };
 
 function getPages(str) {
@@ -110,8 +105,7 @@ function getPages(str) {
     return  Math.ceil((parseInt(splitResults.replace(",", "")) / n));
 }
 
-// function for exporting objects as JSON
-
-jobScrape().then((jobs) => console.log("Done"));
-// jobScrape().then((jobs) => console.log(jobs));
+jobScrape().then((jobs) => console.log(jobs));
 // jobScrape().then((jobs) => console.log(JSON.stringify(jobs)));
+
+jobScrape().then((jobs) => exportToJson(jobs));
