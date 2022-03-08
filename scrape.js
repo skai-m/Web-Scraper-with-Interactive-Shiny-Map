@@ -1,13 +1,14 @@
+//###########################################################################################################
 /**
  * Author: Safiyyah Muhammad
- * Last Updated: 03/07/2022
+ * Last Updated: 03/08/2022
  * CSCI:290 | Final Project
  * Indeed Job Search Results Web Scraper
  */
+//###########################################################################################################
 
 
-
-// set up environment variables
+// set up axios & cheerio
 const axios = require("axios");
 const cheerio = require("cheerio")
 
@@ -22,7 +23,8 @@ var URL = getURL + start;
 // separated with %20 or %2C
 // Example = /jobs?...q&l=New%20York&radius=0&vjk=f92c84c9fbcc2da3
 
-const cities = [];
+// Optional: create a predefined array of cities to search within
+// const cities = [];
 
 class Job  {
     constructor(title, company, city, state, zip, payLow, payHigh, payType) {
@@ -36,27 +38,36 @@ class Job  {
         this.payType = payType;
     }
 }
-
+// jobs will store an array of Jobs objects and be returned by jobScrape()
 const jobs = [];
+// resultString will store the number of total job results
 const resultString = "";
-
+// i will intialize the dowhile loop
 var i = 0;
-const n = 5;
+// n is the number of pages to be returned
+var n = 5;
 // begin function
 const jobScrape = async() => {
     try {
         do {
-            const response = await
             // get the data from the web
-            
+            const response = await
             axios.get(URL);
             const html = response.data;
 
             const $ = cheerio.load(html);
 
-            // resultString = $("div > div#searchCountPages").text().trim();
-            // resultsString = "Page 1 of n jobs"
-            // numPages = getPages(resultString);
+            // Gets the number of job results (total) and estimates the total number of pages
+            // Un-comment this if you want to scrape every page of job results, but use **caution**.
+
+            /** 
+             * if(i == 0) {
+             *  resultString = $("div > div#searchCountPages").text().trim();
+             *  resultsString = "Page 1 of n jobs"
+             *  numPages = getPages(resultString);
+             *  n = numPages;
+             * }
+            */ 
 
             $("h2 > div").remove();
 
