@@ -10,7 +10,8 @@
 
 // set up axios & cheerio
 const axios = require("axios");
-const cheerio = require("cheerio")
+const cheerio = require("cheerio");
+const { toString } = require("cheerio/lib/api/manipulation");
 
 // base URL -> "https://www.indeed.com/jobs?";
 const getURL = "https://www.indeed.com/jobs?q&l=California"
@@ -27,7 +28,7 @@ var URL = getURL + start;
 // const cities = [];
 
 class Job  {
-    constructor(title, company, city, state, zip, payLow, payHigh, payType) {
+    constructor(title, company, city, state, zip, payLow, payHigh, payType, desc) {
         this.jobTitle = title;
         this.jobCompany = company;
         this.city = city;
@@ -36,6 +37,7 @@ class Job  {
         this.payLow = payLow;
         this.payHigh = payHigh;
         this.payType = payType;
+        this.desc = desc;
     }
 }
 // jobs will store an array of Jobs objects and be returned by jobScrape()
@@ -71,11 +73,12 @@ const jobScrape = async() => {
 
             $("h2 > div").remove();
 
-            $("div > table > tbody > tr > td.resultContent").each((_idx, el) => {
+            $("div.slider_list > div.slider_item").each((_idx, el) => {
                 let title = $(el).find("h2").text();
                 let company = $(el).find("div > span.companyName").text();
                 let location = $(el).find("div.companyLocation").text();
                 let pay = $(el).find("div.metadata\.salary-snippet-container > div.attribute_snippet").text();
+                let desc = $(el).find("div.job-snippet > ul > li").text();
 
                 let index = location.indexOf("+");
                 if(index != -1) {
@@ -125,17 +128,38 @@ const jobScrape = async() => {
                         payArray[payIndex] = payArray[payIndex].replace(",", "");
                     };
                     if(payArray.length == 5) {
-                    payLow = payArray[0];
-                    payHigh = payArray[2];
-                    payType = payArray[4];
+                        if(payArray[0] == "Up") {
+                            payLow = 0;
+                            payHigh = payArray[2];
+                            payType = payArray[4];
+                        } else {
+                            payLow = payArray[0];
+                            payHigh = payArray[2];
+                            payType = payArray[4];
+                        }
                     } else {
                     payLow = payArray[0];
                     payHigh = payArray[0];
                     payType = payArray[2];
                     };
                 }
+                if(!desc) {
+                    desc = "null";
+                } else {
+                    desc = desc.trim();
+                    while(desc.search(",") != -1) {
+                        desc = desc.replace(",", "");
+                    }
+                    while(desc.search("\u201C") != -1) {
+                        desc = desc.replace("\u201C", "");
+                        desc = desc.replace("\u201D", "");
+                    }
+                    while(desc.search("\u2424") != -1) {
+                        desc = desc.replace("\u2424", " ");
+                    }
+                }
                 
-                jobs.push(new Job(title, company, city, state, zip, payLow, payHigh, payType));
+                jobs.push(new Job(title, company, city, state, zip, payLow, payHigh, payType, desc));
             });
             i++;
             start = "&start=" + i + "0";
@@ -166,7 +190,8 @@ function toStringCsv(arr) {
             "zipcode",
             "payLow",
             "payHigh",
-            "payType"
+            "payType",
+            "description"
         ],
         ...objArray.map(job => [
             job.jobTitle,
@@ -176,7 +201,8 @@ function toStringCsv(arr) {
             job.zip,
             job.payLow,
             job.payHigh,
-            job.payType
+            job.payType,
+            job.desc
          ])
         ]
         .map(e => e.join(","))
