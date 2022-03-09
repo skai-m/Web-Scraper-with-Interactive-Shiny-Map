@@ -12,9 +12,15 @@
 const axios = require("axios");
 const cheerio = require("cheerio");
 const { toString } = require("cheerio/lib/api/manipulation");
+const { ElementType } = require("htmlparser2");
 
-// base URL -> "https://www.indeed.com/jobs?";
-const getURL = "https://www.indeed.com/jobs?q&l=California"
+// Optional: create a predefined array of cities to search within and industries to search for:
+const what = ["data science", "web development", "human resources", "customer service", "clerical", "manufacturing"];
+const where = ["United%20States"];
+// const cities = [];
+
+const baseURL = "https://www.indeed.com/jobs?";
+var getURL = ""
 var start = "";
 var URL = getURL + start;
 
@@ -24,8 +30,21 @@ var URL = getURL + start;
 // separated with %20 or %2C
 // Example = /jobs?...q&l=New%20York&radius=0&vjk=f92c84c9fbcc2da3
 
-// Optional: create a predefined array of cities to search within
-// const cities = [];
+if(what) {
+    for(industry in what) {
+        getURL = baseURL + "q=";
+        let whatArray = what[industry].split(" ");
+        let length = whatArray.length;
+        let i = 1;
+        whatArray.forEach(word => {
+            getURL += word;
+            if(length - i > 0) {
+              getURL += "%20";
+            } 
+            i++;
+        });
+        URL = getURL + start + "&l=" + where[0];    }
+}
 
 class Job  {
     constructor(title, company, city, state, zip, payLow, payHigh, payType, desc) {
@@ -43,6 +62,7 @@ class Job  {
 // jobs will store an array of Jobs objects and be returned by jobScrape()
 const jobs = [];
 // resultString will store the number of total job results
+// resultsString will load the value fom Indeed: "Page 1 of n jobs"
 const resultString = "";
 // i will intialize the dowhile loop
 var i = 0;
@@ -65,7 +85,6 @@ const jobScrape = async() => {
             /** 
              * if(i == 0) {
              *  resultString = $("div > div#searchCountPages").text().trim();
-             *  resultsString = "Page 1 of n jobs"
              *  numPages = getPages(resultString);
              *  n = numPages;
              * }
@@ -211,6 +230,4 @@ function toStringCsv(arr) {
         console.log(csvString);
 }
 
-// jobScrape().then((jobs) => console.log(jobs));
-// jobScrape().then((jobs) => console.log(JSON.stringify(jobs)));
    jobScrape().then((jobs) => toStringCsv(jobs));
