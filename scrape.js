@@ -61,6 +61,7 @@ const jobScrape = async() => {
             let thisIndustry = what[industry];
             do {
                 // get the data from the web
+                URL = getURL + start; 
                 const response = await
                 axios.get(URL);
                 const html = response.data;
@@ -169,7 +170,6 @@ const jobScrape = async() => {
                 });
                 i++;
                 start = "&start=" + i + "0";
-                URL = getURL + start;
             } while(i < n);
         }    
         return jobs;
