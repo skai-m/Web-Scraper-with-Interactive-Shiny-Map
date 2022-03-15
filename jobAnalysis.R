@@ -1,5 +1,5 @@
 # Author: Safiyyah Muhammad
-# Last Updated: 3/8/2022
+# Last Updated: 3/15/2022
 # Name: "jobAnalysis.R"
 #-------------------------------------------------------------------------------
 
@@ -13,7 +13,10 @@ library(janitor)
 library(skimr)
 
 #---Get Data----
-jobs <- tibble(read.csv("jobs.csv", na.strings = "null", skipNul = T))
+input <- "jobs.csv"
+jobs <- tibble(read.csv(input, na.strings = "null", skipNul = T))
+input2 <- "us_cities.csv"
+us_cities <- tibble(read.csv(input2))
 
 # Preview tibble
 head(jobs)
@@ -27,10 +30,14 @@ skim_without_charts(jobs)
 #* 2. Check data types
 #* 3. Data validation. Check data ranges
 #* 4. Remove data with missing city/state fields from data frame
+#* 5. Remove duplicates (if any)
+#* 6. Add lat/long
 #**
 
 # 1. Standardize and clean variable names
 jobs <- jobs %>% 
+  clean_names()
+us_cities <- us_cities %>% 
   clean_names()
 
 str(jobs)
@@ -43,8 +50,18 @@ jobs <- jobs %>%
   mutate(pay_type = as.factor(pay_type))
 
 # Leading zeros were dropped when transforming data frame to tibble and must either
-# be restored or removed.
+# be restored or removed. [***Not Working***]
 
 jobs <- jobs %>% 
   mutate(zipcode = as.character(zipcode)) %>% 
   mutate(zipcode = replace(zipcode, str_detect(zipcode, "^\\w{4}$") & !is.na(zipcode), paste0("0", zipcode)))
+
+# 4. Remove records with NA in city OR state fields
+
+jobs %>% 
+  filter(!(is.na(city) | (is.na(state))))
+
+# 6. Add lat/long
+
+left_join(jobs, select(us_cities, accent_city, region, latitude, longitude), by = c("city" = "accent_city", "state" = "region")) %>% 
+  filter(!is.na(latitude))
