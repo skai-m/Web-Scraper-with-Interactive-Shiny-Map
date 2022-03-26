@@ -1,10 +1,11 @@
 # Author: Safiyyah Muhammad
-# Last Updated: 3/24/2022
-# Name: "jobAnalysis.R"
+# Last Updated: 3/25/2022
+# Name: "app.R"
 # Description:
 # R script to process and clean data from `jobs.csv` and prepare it for
 # systematic visualization. This script will add additional fields to the 
-# scraped data, as well as standardize data formats and remove nulls.
+# scraped data, as well as standardize data formats and remove nulls. Leaflet
+# and Shiny packages will output the data to an html map.
 #-------------------------------------------------------------------------------
 
 # Load packages
@@ -113,15 +114,38 @@ data <- jobs
 map <- leaflet() 
   
 ui <- fluidPage(
+  titlePanel("Title", windowTitle = "Title Here"),
   fluidRow(
     sidebarLayout(
       mainPanel(
         tabsetPanel(
-          tabPanel("tab 1", "content"),
-          tabPanel("tab 2", "content")
-        )
+          tabPanel("Map", "content"),
+          tabPanel("Data", "content")
+        ), width = 9
       ),
-      sidebarPanel("sidebar")
+      sidebarPanel("Filter",
+                   selectInput(
+                     inputId = "query", 
+                     label = "Query",
+                     c("--All--" = "", sort(unique(data$industry))),
+                   ),
+                   selectInput(
+                     inputId = "state", 
+                     label = "State",
+                     c("--All--" = "", sort(unique(data$state)))
+                     ),
+                   selectInput(
+                     inputId = "salary", 
+                     label = "Annual Salary",
+                     c("--All--" = "", "$0 to $34,999", "$35,000 to $64,999", "$65,000 to $94,999", "Above $94,999")
+                   ),
+                   submitButton("Update"),
+                   actionButton(
+                     inputId = "reset",
+                     label = "Reset"
+                   ), width = 3
+                   )
+      
     )
   )
 )
