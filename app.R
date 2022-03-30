@@ -1,5 +1,5 @@
 # Author: Safiyyah Muhammad
-# Last Updated: 3/25/2022
+# Last Updated: 3/30/2022
 # Name: "app.R"
 # Description:
 # R script to process and clean data from `jobs.csv` and prepare it for
@@ -20,6 +20,7 @@ library(skimr)
 # Load Shiny & leaflet packages
 library(shiny)
 library(leaflet)
+library(maps)
 
 #---Start-----------------------------------------------------------------------
 
@@ -46,7 +47,8 @@ skim_without_charts(jobs)
 # 1. Standardize and clean variable names and values(as needed)
 jobs <- jobs %>% 
   clean_names() %>% 
-  mutate(industry = str_to_title(industry))
+  mutate(industry = str_to_title(industry)) %>% 
+  mutate(title = str_to_title(title))
 us_cities <- us_cities %>% 
   clean_names()
 
@@ -100,26 +102,55 @@ jobs <- left_join(jobs, select(us_cities, accent_city, region, latitude, longitu
 # Using "1,801" to estimate the average amount of hours a typical American works 
 # in a year
 
-jobs %>% 
+jobs <- jobs %>% 
   mutate(salary = case_when(pay_type == "hour" ~ (pay_low + pay_high) / 2 * 1801,
                             pay_type == "week" ~ (pay_low + pay_high) / 2 * 52,
-                            pay_type == "year" ~ (pay_low + pay_high) / 2)
+                            pay_type == "year" ~ (pay_low + pay_high) / 2,
+                            pay_type == "day" ~ 0)
          )
   
 
 #---Shiny & Leaflet-------------------------------------------------------------
 
 # Initialize Map coordinates
-data <- jobs
-map <- leaflet() 
-  
+data <- jobs %>% 
+  filter(!is.na(salary))
+
+getColor <- function(data) {
+  sapply(data$salary, function(salary) {
+    if(salary >= 70000) {
+      "green"
+    } else if(salary >= 45000) {
+      "orange"
+    } else {
+      "red"
+    } })
+}
+
+icons <- awesomeIcons(
+  icon = "user",
+  iconColor = rgb(1,1,1),
+  library = "fa",
+  markerColor = getColor(data)
+)
+
+# Adds colored markers based on `salary`
+dataMap <- leaflet(data) %>% 
+  addAwesomeMarkers(icon = icons, label = ~title) %>% 
+  addTiles()
+
+dataMap <- leaflet(data) %>% 
+  addMarkers(popup = "message here", label = ~title) %>% 
+  addTiles()
+
+# Shiny  
 ui <- fluidPage(
   titlePanel("Title", windowTitle = "Title Here"),
   fluidRow(
     sidebarLayout(
       mainPanel(
         tabsetPanel(
-          tabPanel("Map", "content"),
+          tabPanel("Map", dataMap),
           tabPanel("Data", "content")
         ), width = 9
       ),
