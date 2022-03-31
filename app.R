@@ -1,5 +1,5 @@
 # Author: Safiyyah Muhammad
-# Last Updated: 3/30/2022
+# Last Updated: 3/31/2022
 # Name: "app.R"
 # Description:
 # R script to process and clean data from `jobs.csv` and prepare it for
@@ -19,6 +19,7 @@ library(skimr)
 
 # Load Shiny & leaflet packages
 library(shiny)
+library(shinyjs)
 library(leaflet)
 library(maps)
 
@@ -27,6 +28,8 @@ library(maps)
 #---Get Data----
 input <- "jobs.csv"
 jobs <- tibble(read.csv(input, na.strings = "null", skipNul = T))
+more <- "more_jobs.csv"
+jobs <- rbind(tibble(read.csv(more, na.strings = "null", skipNul = T)))
 input2 <- "us_cities.csv"
 us_cities <- tibble(read.csv(input2))
 
@@ -58,6 +61,7 @@ str(jobs)
 jobs <- jobs %>% 
   mutate(pay_low = as.numeric(pay_low)) %>% 
   mutate(pay_high = as.numeric(pay_high)) %>% 
+  mutate(pay_type = na_if(pay_type, "a")) %>% 
   mutate(pay_type = na_if(pay_type, "an")) %>% 
   mutate(pay_type = as.factor(pay_type))
 
@@ -114,14 +118,20 @@ jobs <- jobs %>%
 
 # Initialize Map coordinates
 data <- jobs %>% 
-  filter(!is.na(salary))
+  filter(!is.na(salary) & salary != 0)
 
 getColor <- function(data) {
   sapply(data$salary, function(salary) {
     if(salary >= 70000) {
+     "blue"
+    } else if(salary >= 55000) {
       "green"
-    } else if(salary >= 45000) {
+    } else if(salary >= 40000) {
       "orange"
+    } else if(salary >= 30000) {
+      "orange"
+    } else if(salary == 0) {
+      "gray"
     } else {
       "red"
     } })
@@ -136,7 +146,7 @@ icons <- awesomeIcons(
 
 # Adds colored markers based on `salary`
 dataMap <- leaflet(data) %>% 
-  addAwesomeMarkers(icon = icons, label = ~title) %>% 
+  addAwesomeMarkers(icon = icons, label = ~salary) %>% 
   addTiles()
 
 dataMap <- leaflet(data) %>% 
@@ -150,11 +160,13 @@ ui <- fluidPage(
     sidebarLayout(
       mainPanel(
         tabsetPanel(
-          tabPanel("Map", dataMap),
+          tabPanel("Map", leafletOutput("map1")),
           tabPanel("Data", "content")
         ), width = 9
       ),
-      sidebarPanel("Filter",
+      sidebarPanel(shinyjs::useShinyjs(),
+                  id = "side-panel",
+                  "Filter",
                    selectInput(
                      inputId = "query", 
                      label = "Query",
@@ -170,7 +182,10 @@ ui <- fluidPage(
                      label = "Annual Salary",
                      c("--All--" = "", "$0 to $34,999", "$35,000 to $64,999", "$65,000 to $94,999", "Above $94,999")
                    ),
-                   submitButton("Update"),
+                   actionButton(
+                     inputId = "update",
+                     label = "Update"
+                     ),
                    actionButton(
                      inputId = "reset",
                      label = "Reset"
@@ -189,7 +204,48 @@ ui <- fluidPage(
 #* "Update" button; observeEvent()
   
 
-server <- function(input, output) {}
+server <- function(input, output) {
+  dataQuery <- reactive({
+    input$query
+  })
+  
+  dataState <- reactive({
+    input$state
+  })
+  
+  dataSalary <- reactive({
+    input$salary
+  })
+
+  data <- eventReactive(input$update, {
+    if(input$query != "" & input$state != "") {
+      jobs %>% 
+        filter(industry == dataQuery()) %>% 
+        filter(state == dataState())
+    } else if(input$query != "" & input$state == "") {
+      jobs %>% 
+        filter(industry == dataQuery())
+    } else if(input$query == "" & input$state != "") {
+      jobs %>% 
+        filter(state == dataState())
+    } else {
+      jobs
+    }
+    
+  }, ignoreNULL = FALSE, ignoreInit = FALSE)
+  
+  # Does not update until `update` is clicked
+  observeEvent(input$reset, {
+    shinyjs::reset("side-panel")
+  })
+  
+    output$map1 = renderLeaflet(
+      leaflet(data()) %>% 
+        addTiles() %>% 
+        addCircles()
+    )
+    
+}
 
 #**
 #* Define server functions and render Map using Leaflet?:
