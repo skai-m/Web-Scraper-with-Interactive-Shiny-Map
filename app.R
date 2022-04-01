@@ -20,6 +20,7 @@ library(skimr)
 # Load Shiny & leaflet packages
 library(shiny)
 library(shinyjs)
+library(shinyWidgets)
 library(leaflet)
 library(maps)
 
@@ -118,7 +119,13 @@ jobs <- jobs %>%
 
 # Initialize Map coordinates
 data <- jobs %>% 
-  filter(!is.na(salary) & salary != 0)
+  filter(!is.na(salary))
+
+data2 <- jobs %>% 
+  filter(!is.na(salary))
+
+data2 <- data2 %>% 
+  mutate(label = paste(sep = "<br>", paste("<b>", title, "</b>"), company, paste(sep = "", "$", salary)))
 
 getColor <- function(data) {
   sapply(data$salary, function(salary) {
@@ -149,9 +156,17 @@ dataMap <- leaflet(data) %>%
   addAwesomeMarkers(icon = icons, label = ~salary) %>% 
   addTiles()
 
-dataMap <- leaflet(data) %>% 
-  addMarkers(popup = "message here", label = ~title) %>% 
-  addTiles()
+dataMap <- leaflet(data2) %>% 
+  addTiles() %>% 
+  addCircleMarkers(color = "white", 
+                   fillColor = "blue", 
+                   radius = 5,
+                   weight = 2,
+                   fillOpacity = 0.6,
+                   popup = ~label,
+                   popupOptions = popupOptions(closeButton = FALSE),
+                   clusterOptions = markerClusterOptions(showCoverageOnHover = FALSE))
+  dataMap
 
 # Shiny  
 ui <- fluidPage(
@@ -242,7 +257,7 @@ server <- function(input, output) {
     output$map1 = renderLeaflet(
       leaflet(data()) %>% 
         addTiles() %>% 
-        addCircles()
+        addCircleMarkers()
     )
     
 }
