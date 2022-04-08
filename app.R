@@ -1,5 +1,5 @@
 # Author: Safiyyah Muhammad
-# Last Updated: 3/31/2022
+# Last Updated: 4/7/2022
 # Name: "app.R"
 # Description:
 # R script to process and clean data from `jobs.csv` and prepare it for
@@ -27,10 +27,27 @@ library(maps)
 #---Start-----------------------------------------------------------------------
 
 #---Get Data----
-input <- "jobs.csv"
-jobs <- tibble(read.csv(input, na.strings = "null", skipNul = T))
-more <- "more_jobs.csv"
-jobs <- rbind(tibble(read.csv(more, na.strings = "null", skipNul = T)))
+# Initial jobs data...
+input <- "data/jobs.csv"
+jobs <- tibble(read.csv(input, na.strings = "null", skipNul = T, quote = ""))
+
+
+# Adds new data...
+jobs <- rbind(jobs, tibble(read.csv("data/more_jobs.csv", na.strings = "null", 
+                              skipNul = T, quote = "")))
+
+jobs2 <- rbind(tibble(read.csv("data/newjobs2.csv", na.strings = "null", skipNul = T, 
+                        quote = "")), tibble(read.csv("data/newjobs3.csv", 
+                        na.strings = "null", skipNul = T, quote = "")))
+
+names(jobs2) <- names(jobs)
+
+jobs <- rbind(jobs, jobs2)
+
+rm(jobs2)
+
+
+
 input2 <- "us_cities.csv"
 us_cities <- tibble(read.csv(input2))
 
@@ -97,7 +114,7 @@ anyDuplicated(jobs)
 # 6. Add lat/long
 
 jobs <- left_join(jobs, select(us_cities, accent_city, region, latitude, longitude),
-        by = c("city" = "accent_city", "state" = "region")) %>% 
+                  by = c("city" = "accent_city", "state" = "region")) %>% 
   filter(!is.na(latitude))
 
 #--Transform---
@@ -112,8 +129,8 @@ jobs <- jobs %>%
                             pay_type == "week" ~ (pay_low + pay_high) / 2 * 52,
                             pay_type == "year" ~ (pay_low + pay_high) / 2,
                             pay_type == "day" ~ 0)
-         )
-  
+  )
+
 
 #---Shiny & Leaflet-------------------------------------------------------------
 
@@ -125,12 +142,13 @@ data2 <- jobs %>%
   filter(!is.na(salary))
 
 data2 <- data2 %>% 
-  mutate(label = paste(sep = "<br>", paste("<b>", title, "</b>"), company, paste(sep = "", "$", salary)))
+  mutate(label = paste(sep = "<br>", paste("<b>", title, "</b>"), company, 
+                       paste(sep = "", "$", salary)))
 
 getColor <- function(data) {
   sapply(data$salary, function(salary) {
     if(salary >= 70000) {
-     "blue"
+      "blue"
     } else if(salary >= 55000) {
       "green"
     } else if(salary >= 40000) {
@@ -152,9 +170,9 @@ icons <- awesomeIcons(
 )
 
 # Adds colored markers based on `salary`
-dataMap <- leaflet(data) %>% 
-  addAwesomeMarkers(icon = icons, label = ~salary) %>% 
-  addTiles()
+#dataMap <- leaflet(data) %>% 
+#  addAwesomeMarkers(icon = icons, label = ~salary) %>% 
+#  addTiles()
 
 dataMap <- leaflet(data2) %>% 
   addTiles() %>% 
@@ -166,7 +184,7 @@ dataMap <- leaflet(data2) %>%
                    popup = ~label,
                    popupOptions = popupOptions(closeButton = FALSE),
                    clusterOptions = markerClusterOptions(showCoverageOnHover = FALSE))
-  dataMap
+#dataMap
 
 # Shiny  
 ui <- fluidPage(
@@ -180,8 +198,8 @@ ui <- fluidPage(
         ), width = 9
       ),
       sidebarPanel(shinyjs::useShinyjs(),
-                  id = "side-panel",
-                  "Filter",
+                   id = "side-panel",
+                   "Filter",
                    selectInput(
                      inputId = "query", 
                      label = "Query",
@@ -191,7 +209,7 @@ ui <- fluidPage(
                      inputId = "state", 
                      label = "State",
                      c("--All--" = "", sort(unique(data$state)))
-                     ),
+                   ),
                    selectInput(
                      inputId = "salary", 
                      label = "Annual Salary",
@@ -200,12 +218,12 @@ ui <- fluidPage(
                    actionButton(
                      inputId = "update",
                      label = "Update"
-                     ),
+                   ),
                    actionButton(
                      inputId = "reset",
                      label = "Reset"
                    ), width = 3
-                   )
+      )
       
     )
   )
@@ -217,7 +235,7 @@ ui <- fluidPage(
 #* filter criteria : 1. city, state, pay, limit n
 #* zoom, pan tools
 #* "Update" button; observeEvent()
-  
+
 
 server <- function(input, output) {
   dataQuery <- reactive({
@@ -231,7 +249,7 @@ server <- function(input, output) {
   dataSalary <- reactive({
     input$salary
   })
-
+  
   data <- eventReactive(input$update, {
     if(input$query != "" & input$state != "") {
       jobs %>% 
@@ -254,12 +272,19 @@ server <- function(input, output) {
     shinyjs::reset("side-panel")
   })
   
-    output$map1 = renderLeaflet(
-      leaflet(data()) %>% 
-        addTiles() %>% 
-        addCircleMarkers()
-    )
-    
+  output$map1 = renderLeaflet(
+    leaflet(data()) %>% 
+      addTiles() %>% 
+      addCircleMarkers(color = "white", 
+                       fillColor = "blue", 
+                       radius = 5,
+                       weight = 2,
+                       fillOpacity = 0.6,
+                       #popup = ~label,
+                       #popupOptions = popupOptions(closeButton = FALSE),
+                       clusterOptions = markerClusterOptions(showCoverageOnHover = FALSE))
+  )
+  
 }
 
 #**
