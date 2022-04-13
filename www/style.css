@@ -1,0 +1,53 @@
+/* Last Updated: 4/12/2022 */
+
+:root {
+    --accent-color: rgb(4, 118, 191);
+}
+div .form-group.shiny-input-container {
+    display:inline;
+    float: right;
+}
+
+.navbar {
+    margin-bottom: 5px;
+}
+.tab-content {
+    background-color: #f8f8f8;
+    border: 1px solid #e7e7e7;
+    padding: 10px 20px;
+}
+.form-group {
+    margin-bottom: 0px;
+}
+label {
+    margin:none;
+    font-weight: 1;
+}
+div.row {
+    width:100%;
+    margin-top:15px;
+    margin-left: 15px;
+    margin-right: 15px;
+    margin-bottom: 10px;
+}
+div.row > div {
+    padding-left: 0;
+}
+div.form-group.shiny-input-container {
+    float:none;
+}
+.selectize-input {
+    z-index:0;
+}
+button {
+    width: 70px;
+    margin-right: 10px;
+}
+button#update {
+    background-color:var(--accent-color);
+    color: white;
+}
+.navbar-default .navbar-nav>.active>a, .navbar-default .navbar-nav>.active>a:focus, .navbar-default .navbar-nav>.active>a:hover {
+    color: white;
+    background-color: var(--accent-color);
+}
