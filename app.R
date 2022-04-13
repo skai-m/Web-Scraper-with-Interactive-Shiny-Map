@@ -25,6 +25,8 @@ library(shinyWidgets)
 library(leaflet)
 library(maps)
 
+options(scipen = 100)
+
 #---Start-----------------------------------------------------------------------
 
 #---Get Data----
@@ -145,7 +147,7 @@ data2 <- jobs %>%
 
 data2 <- data2 %>% 
   mutate(label = paste(sep = "<br>", paste("<b>", title, "</b>"), company, 
-                       paste(sep = "", "$", salary)))
+                       paste(sep = "", dollar(salary))))
 
 getColor <- function(data) {
   sapply(data$salary, function(salary) {
@@ -193,7 +195,6 @@ ui <- navbarPage(theme = "style.css",
   title = "Indeed Jobs in the US",
   tabPanel(
     "Map",
-    leafletOutput("map1"),
     fluidRow(
       column(
         width = 4,
@@ -218,25 +219,39 @@ ui <- navbarPage(theme = "style.css",
              )       
       ),
       column(width = 3,
-             checkboxInput(
-               inputId = "cluster",
-               label = "Cluster Overlap",
-               value = TRUE
+             checkboxGroupInput(
+               inputId = "extras",
+               label = "Other",
+               choiceNames = list("Cluster Output", "Must Contain Salary*"),
+               choiceValues = list(0, 1),
+               selected = 0
              )
       )
     ),
-      fluidRow(
-        column(width = 12,
-               actionButton(
-                 inputId = "update",
-                 label = "Update"
-               ),
-               actionButton(
-                 inputId = "reset",
-                 label = "Reset"
-               ))
+    fluidRow(
+      column(width = 12,
+             actionButton(
+               inputId = "update",
+               label = "Update"
+             ),
+             actionButton(
+               inputId = "reset",
+               label = "Reset"
+             ))
+    ),
+    sidebarLayout(
+      sidebarPanel(
+        tabsetPanel(
+          tabPanel("Summary"),
+          tabPanel("Graph",
+                   plotOutput("graph"))
+        )
       ),
-      dataTableOutput("table")
+      mainPanel(
+        leafletOutput("map1")
+      ),
+    ),
+    dataTableOutput("table")
     ),
   navbarMenu(
     title = "More",
@@ -269,17 +284,17 @@ server <- function(input, output) {
   
   data <- eventReactive(input$update, {
     if(input$query != "" & input$state != "") {
-      jobs %>% 
+      data2 %>% 
         filter(industry == dataQuery()) %>% 
         filter(state == dataState())
     } else if(input$query != "" & input$state == "") {
-      jobs %>% 
+      data2 %>% 
         filter(industry == dataQuery())
     } else if(input$query == "" & input$state != "") {
-      jobs %>% 
+      data2 %>% 
         filter(state == dataState())
     } else {
-      jobs
+      data2
     }
     
   }, ignoreNULL = FALSE, ignoreInit = FALSE)
@@ -289,6 +304,8 @@ server <- function(input, output) {
     shinyjs::reset("side-panel")
   })
   
+  # Define output plots
+  
   output$map1 = renderLeaflet(
     leaflet(data()) %>% 
       addTiles() %>% 
@@ -297,8 +314,8 @@ server <- function(input, output) {
                        radius = 5,
                        weight = 2,
                        fillOpacity = 0.6,
-                       #popup = ~label,
-                       #popupOptions = popupOptions(closeButton = FALSE),
+                       popup = ~label,
+                       popupOptions = popupOptions(closeButton = FALSE),
                        clusterOptions = markerClusterOptions(showCoverageOnHover = FALSE))
   )
   
@@ -306,6 +323,13 @@ server <- function(input, output) {
                                    select(title, company, city, state, salary) %>% 
                                    mutate(salary, salary = dollar(salary)),
                                  options = list(autoWidth = TRUE))
+  
+  output$graph = renderPlot(data() %>% 
+                              filter(salary != 0) %>% 
+                              ggplot(aes(x = salary)) +
+                              geom_histogram(fill = "blue") +
+                              theme_light(),
+                            height = 300)
   
 }
 
