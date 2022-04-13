@@ -1,5 +1,5 @@
 # Author: Safiyyah Muhammad
-# Last Updated: 4/7/2022
+# Last Updated: 4/12/2022
 # Name: "app.R"
 # Description:
 # R script to process and clean data from `jobs.csv` and prepare it for
@@ -16,6 +16,7 @@ library(tidyverse)
 library(cleanr)
 library(janitor)
 library(skimr)
+library(scales)
 
 # Load Shiny & leaflet packages
 library(shiny)
@@ -34,11 +35,11 @@ jobs <- tibble(read.csv(input, na.strings = "null", skipNul = T, quote = ""))
 
 # Adds new data...
 jobs <- rbind(jobs, tibble(read.csv("data/more_jobs.csv", na.strings = "null", 
-                              skipNul = T, quote = "")))
+                                    skipNul = T, quote = "")))
 
 jobs2 <- rbind(tibble(read.csv("data/newjobs2.csv", na.strings = "null", skipNul = T, 
-                        quote = "")), tibble(read.csv("data/newjobs3.csv", 
-                        na.strings = "null", skipNul = T, quote = "")))
+                               quote = "")), tibble(read.csv("data/newjobs3.csv", 
+                                                             na.strings = "null", skipNul = T, quote = "")))
 
 names(jobs2) <- names(jobs)
 
@@ -48,7 +49,7 @@ rm(jobs2)
 
 
 
-input2 <- "us_cities.csv"
+input2 <- "data/us_cities.csv"
 us_cities <- tibble(read.csv(input2))
 
 # Preview tibble
@@ -110,6 +111,7 @@ jobs <- jobs %>%
 # same object twice...)
 
 anyDuplicated(jobs)
+jobs <- unique(jobs)
 
 # 6. Add lat/long
 
@@ -186,46 +188,61 @@ dataMap <- leaflet(data2) %>%
                    clusterOptions = markerClusterOptions(showCoverageOnHover = FALSE))
 #dataMap
 
-# Shiny  
-ui <- fluidPage(
-  titlePanel("Title", windowTitle = "Title Here"),
-  fluidRow(
-    sidebarLayout(
-      mainPanel(
-        tabsetPanel(
-          tabPanel("Map", leafletOutput("map1")),
-          tabPanel("Data", "content")
-        ), width = 9
+# ---Shiny UI----  
+ui <- navbarPage(theme = "style.css",
+  title = "Indeed Jobs in the US",
+  tabPanel(
+    "Map",
+    leafletOutput("map1"),
+    fluidRow(
+      column(
+        width = 4,
+        selectInput(
+          inputId = "query", 
+          label = "Industry",
+          c("--All--" = "", sort(unique(data$industry))),
+        )
       ),
-      sidebarPanel(shinyjs::useShinyjs(),
-                   id = "side-panel",
-                   "Filter",
-                   selectInput(
-                     inputId = "query", 
-                     label = "Query",
-                     c("--All--" = "", sort(unique(data$industry))),
-                   ),
-                   selectInput(
-                     inputId = "state", 
-                     label = "State",
-                     c("--All--" = "", sort(unique(data$state)))
-                   ),
-                   selectInput(
-                     inputId = "salary", 
-                     label = "Annual Salary",
-                     c("--All--" = "", "$0 to $34,999", "$35,000 to $64,999", "$65,000 to $94,999", "Above $94,999")
-                   ),
-                   actionButton(
-                     inputId = "update",
-                     label = "Update"
-                   ),
-                   actionButton(
-                     inputId = "reset",
-                     label = "Reset"
-                   ), width = 3
+      column(width = 2,
+             selectInput(
+               inputId = "state", 
+               label = "State",
+               c("--All--" = "", sort(unique(data$state)))
+             )
+      ),
+      column(width = 3,
+             selectInput(
+               inputId = "salary", 
+               label = "Annual Salary",
+               c("--All--" = "", "$0 to $34,999", "$35,000 to $64,999", "$65,000 to $94,999", "Above $94,999")
+             )       
+      ),
+      column(width = 3,
+             checkboxInput(
+               inputId = "cluster",
+               label = "Cluster Overlap",
+               value = TRUE
+             )
       )
-      
-    )
+    ),
+      fluidRow(
+        column(width = 12,
+               actionButton(
+                 inputId = "update",
+                 label = "Update"
+               ),
+               actionButton(
+                 inputId = "reset",
+                 label = "Reset"
+               ))
+      ),
+      dataTableOutput("table")
+    ),
+  navbarMenu(
+    title = "More",
+    tabPanel("Github"),
+    tabPanel("Data"),
+    tabPanel("About")
   )
 )
 
@@ -284,6 +301,11 @@ server <- function(input, output) {
                        #popupOptions = popupOptions(closeButton = FALSE),
                        clusterOptions = markerClusterOptions(showCoverageOnHover = FALSE))
   )
+  
+  output$table = renderDataTable(data() %>% 
+                                   select(title, company, city, state, salary) %>% 
+                                   mutate(salary, salary = dollar(salary)),
+                                 options = list(autoWidth = TRUE))
   
 }
 
