@@ -7,7 +7,9 @@ div .form-group.shiny-input-container {
     display:inline;
     float: right;
 }
-
+div#map1 {
+    height:100%;
+}
 .navbar {
     margin-bottom: 5px;
 }
