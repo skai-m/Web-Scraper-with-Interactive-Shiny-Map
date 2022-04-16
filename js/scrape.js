@@ -13,7 +13,7 @@
  * This script can be formatted to scrape results in any country taking an array of search parameters.
  * what[] stores any number of search queries to send to Indeed's server. If this is empty and only where[]
  * is defined, the script will simply return all job results in a given area.
- * To modify the search criteria, change the values in where[]
+ * To modify the search criteria, change the values in what[]
  * To modify the number of results returned, change the value of n (an integer)
  * By default, Indeed displays 15 unique job records per page.
  * As such, the number of total records returned can be modeled as n * 15 * what.length.
