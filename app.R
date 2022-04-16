@@ -1,5 +1,5 @@
 # Author: Safiyyah Muhammad
-# Last Updated: 4/12/2022
+# Last Updated: 4/15/2022
 # Name: "app.R"
 # Description:
 # R script to process and clean data from `jobs.csv` and prepare it for
@@ -191,7 +191,7 @@ dataMap <- leaflet(data2) %>%
 #dataMap
 
 # ---Shiny UI----  
-ui <- navbarPage(theme = "style.css",
+ui <- navbarPage(useShinyjs(), theme = "style.css",
   title = "Indeed Jobs in the US",
   tabPanel(
     "Map",
@@ -240,19 +240,32 @@ ui <- navbarPage(theme = "style.css",
              ))
     ),
     sidebarLayout(
-      sidebarPanel(
+      sidebarPanel(width = 3,
         tabsetPanel(
-          tabPanel("Summary"),
+          tabPanel("Summary",
+                   tags$span(
+                     HTML("<b style=\"color:rgb(4, 118, 191);\">Number of jobs </b>"),
+                     textOutput("noJobs"),
+                     HTML("</br>")
+                   ),
+                   tags$span(
+                     HTML("<b style=\"color:rgb(4, 118, 191);\">Median salary</b>"),
+                     textOutput("infoSalary")
+                   )
+                   
+                   ),
           tabPanel("Graph",
                    plotOutput("graph"))
         )
       ),
-      mainPanel(
+      mainPanel(width = 9,
         leafletOutput("map1")
       ),
+    )
     ),
-    dataTableOutput("table")
-    ),
+  tabPanel("Data Viewer",
+           dataTableOutput("table")
+           ),
   navbarMenu(
     title = "More",
     tabPanel("Github"),
@@ -283,25 +296,48 @@ server <- function(input, output) {
   })
   
   data <- eventReactive(input$update, {
-    if(input$query != "" & input$state != "") {
-      data2 %>% 
-        filter(industry == dataQuery()) %>% 
+    
+   temp <- if(input$query != "" & input$state != "") {
+      data2 %>%
+        filter(industry == dataQuery()) %>%
         filter(state == dataState())
     } else if(input$query != "" & input$state == "") {
-      data2 %>% 
+      data2 %>%
         filter(industry == dataQuery())
     } else if(input$query == "" & input$state != "") {
-      data2 %>% 
+      data2 %>%
         filter(state == dataState())
     } else {
       data2
     }
+   
+    if(input$salary != "") { 
+      temp <-
+      if(dataSalary() == "$0 to $34,999") {
+        temp %>% 
+        filter(salary >= 0 & salary < 35000)
+      } else if(dataSalary() == "$35,000 to $64,999") {
+        temp %>% 
+        filter(salary >= 35000 & salary < 65000)
+      } else if(dataSalary() == "$65,000 to $94,999") {
+        temp %>% 
+        filter(salary >= 65000 & salary < 95000)
+      } else {
+        temp %>% 
+        filter(salary >= 95000)
+      }
+    }
+   return(temp)
     
   }, ignoreNULL = FALSE, ignoreInit = FALSE)
   
   # Does not update until `update` is clicked
   observeEvent(input$reset, {
-    shinyjs::reset("side-panel")
+    print(dataSalary() == "$35,000 to $64,999")
+    shinyjs::reset("query")
+    shinyjs::reset("salary")
+    shinyjs::reset("state")
+    shinyjs::reset("extras")
   })
   
   # Define output plots
@@ -315,7 +351,7 @@ server <- function(input, output) {
                        weight = 2,
                        fillOpacity = 0.6,
                        popup = ~label,
-                       popupOptions = popupOptions(closeButton = FALSE),
+                       popupOptions = popupOptions(closeButton = TRUE),
                        clusterOptions = markerClusterOptions(showCoverageOnHover = FALSE))
   )
   
@@ -330,6 +366,17 @@ server <- function(input, output) {
                               geom_histogram(fill = "blue") +
                               theme_light(),
                             height = 300)
+  
+  output$noJobs = renderText({
+    info <- data()
+    # infoSalary <- filter(info, salary != 0)
+    paste0(nrow(info))
+  })
+  
+  output$infoSalary = renderText({
+    sInfo <- data() %>%  filter(salary != 0)
+    dollar(median(sInfo$salary, na.rm = TRUE))
+  })
   
 }
 
