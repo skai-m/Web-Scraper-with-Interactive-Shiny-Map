@@ -1,7 +1,10 @@
-/* Last Updated: 4/12/2022 */
+/* Last Updated: 4/15/2022 */
 
 :root {
     --accent-color: rgb(4, 118, 191);
+}
+b, strong {
+    color:var(--accent-color);
 }
 div .form-group.shiny-input-container {
     display:inline;
