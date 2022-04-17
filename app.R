@@ -1,5 +1,5 @@
 # Author: Safiyyah Muhammad
-# Last Updated: 4/15/2022
+# Last Updated: 4/16/2022
 # Name: "app.R"
 # Description:
 # R script to process and clean data from `jobs.csv` and prepare it for
@@ -192,9 +192,9 @@ dataMap <- leaflet(data2) %>%
 
 # ---Shiny UI----  
 ui <- navbarPage(useShinyjs(), theme = "style.css",
-  title = "Indeed Jobs in the US",
+  title = "Jobs in the US",
   tabPanel(
-    "Map",
+    "Map", wellPanel(
     fluidRow(
       column(
         width = 4,
@@ -219,17 +219,6 @@ ui <- navbarPage(useShinyjs(), theme = "style.css",
              )       
       ),
       column(width = 3,
-             checkboxGroupInput(
-               inputId = "extras",
-               label = "Other",
-               choiceNames = list("Cluster Output", "Must Contain Salary*"),
-               choiceValues = list(0, 1),
-               selected = 0
-             )
-      )
-    ),
-    fluidRow(
-      column(width = 12,
              actionButton(
                inputId = "update",
                label = "Update"
@@ -238,13 +227,25 @@ ui <- navbarPage(useShinyjs(), theme = "style.css",
                inputId = "reset",
                label = "Reset"
              ))
+    )
     ),
+    # fluidRow(
+    #   column(width = 3,
+    #          checkboxGroupInput(
+    #            inputId = "extras",
+    #            label = "Other",
+    #            choiceNames = list("Cluster Output", "Must Contain Salary*"),
+    #            choiceValues = list(0, 1),
+    #            selected = 0
+    #          )
+    #   )
+    # ),
     sidebarLayout(
       sidebarPanel(width = 3,
         tabsetPanel(
           tabPanel("Summary",
                    tags$span(
-                     HTML("<b style=\"color:rgb(4, 118, 191);\">Number of jobs </b>"),
+                     HTML("</br><b style=\"color:rgb(4, 118, 191);\">Number of jobs </b>"),
                      textOutput("noJobs"),
                      HTML("</br>")
                    ),
@@ -364,7 +365,7 @@ server <- function(input, output) {
                               filter(salary != 0) %>% 
                               ggplot(aes(x = salary)) +
                               geom_histogram(fill = "blue") +
-                              theme_light(),
+                              theme_minimal(),
                             height = 300)
   
   output$noJobs = renderText({
