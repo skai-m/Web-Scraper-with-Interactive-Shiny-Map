@@ -1,0 +1,92 @@
+/* Last Updated: 4/24/2022 */
+
+:root {
+    --accent-color: rgb(4, 118, 191);
+    --bg-color: #f8f8f8;
+    --window-color: white;
+    --t-color: #777;
+    --border-color: rgba(119,119,119,0.3)
+}
+b, strong {
+    color:var(--accent-color);
+}
+body {
+    margin: 15px;
+    background-color: var(--bg-color);
+}
+div .form-group.shiny-input-container {
+    display:inline;
+    float: right;
+}
+div#map1 {
+    height:100%;
+}
+.navbar {
+    margin-bottom: 5px;
+}
+.form-group {
+    margin-bottom: 0px;
+}
+label {
+    margin:none;
+    font-weight: 1;
+}
+div.row {
+    margin: 0 15px 0;
+    color: var(--t-color);
+}
+div.col-sm-3 {
+    height: 74px;
+}
+div.row > div {
+    padding-left: 0;
+}
+div.form-group.shiny-input-container {
+    float:none;
+}
+.selectize-input {
+    z-index:0;
+}
+button {
+    width: 70px;
+    margin-top: 25px;
+}
+button.btn-default {
+    color: var(--t-color);
+}
+button#update {
+    background-color:var(--accent-color);
+    color: white;
+}
+.navbar-default .navbar-nav>.active>a, .navbar-default .navbar-nav>.active>a:focus, .navbar-default .navbar-nav>.active>a:hover {
+    color: white;
+    background-color: var(--accent-color);
+}
+div.container-fluid {
+    padding: 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    background-color: var(--window-color);
+    box-shadow: 2px 0px 5px var(--border-color);
+}
+
+nav > div.container-fluid {
+    padding: 0;
+}
+
+div.container-fluid > div.tab-content {
+  padding: 0px;
+}
+div#map1 {
+    border: 1px solid var(--border-color);
+}
+div > div.well {
+    padding:5px;
+    background-color: rgba(255, 255, 255, 0.5)
+}
+form.well {
+    background-color: var(--window-color);
+}
+.navbar>.container-fluid .navbar-brand {
+    margin-left: 0;
+}

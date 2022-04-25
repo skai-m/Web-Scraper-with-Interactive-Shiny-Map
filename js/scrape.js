@@ -1,27 +1,52 @@
 //###########################################################################################################
 /**
  * Author: Safiyyah Muhammad
- * Last Updated: 03/08/2022
+ * Last Updated: 04/14/2022
  * CSCI:290 | Final Project
+ * File Name: "scrape.js"
+ 
+ * About:
  * Indeed Job Search Results Web Scraper
+ * This script REQUIRES nodeJs and Cheerio to run. The output data is formatted as comma-separated values
+ * with a header row of column titles. This file scrapes job titles, location (state, city, zip -- if avaliable),
+ * pay schedule and pay ranges, and one line of the job description details. The output can easily be saved to a .csv
+ * This script can be formatted to scrape results in any country taking an array of search parameters.
+ * what[] stores any number of search queries to send to Indeed's server. If this is empty and only where[]
+ * is defined, the script will simply return all job results in a given area.
+ * To modify the search criteria, change the values in what[]
+ * To modify the number of results returned, change the value of n (an integer)
+ * By default, Indeed displays 15 unique job records per page.
+ * As such, the number of total records returned can be modeled as n * 15 * what.length.
  */
 //###########################################################################################################
 
+// Create a predefined array of search terms [OPTIONAL] and industries to search within:
+const what = ["finance", "business administration", "creative arts", "information technology",
+             "agriculture", "healthcare", "education", "government", "retail", "marketing"];
+
+const where = ["United%20States"];
+
+// n is the number of pages to scrape per each search term defined in what[]
+// Indeed will reject get requests over a certain amount. n between 1 and 50 are generally 
+// acceptable. Lower numbers are "safer". Any combination of `what.length * n` over 500 will likely be rejected.
+// At least 1 page of results will always be returned
+
+const n = 50;
+
+// ----------------------------------------------------------------------------------------------------
+
+// ----------------Editing anything below these lines will alter functionality ------------------------
+
+// ----------------------------------------------------------------------------------------------------
 
 // set up axios & cheerio
 const axios = require("axios");
 const cheerio = require("cheerio");
-const { toString } = require("cheerio/lib/api/manipulation");
-const { ElementType } = require("htmlparser2");
-
-// Optional: create a predefined array of cities to search within and industries to search for:
-const what = ["data science", "web development", "human resources", "customer service", "clerical", "manufacturing"];
-const where = ["United%20States"];
-// const cities = [];
 
 const baseURL = "https://www.indeed.com/jobs?";
 var getURL = "";
 var start = "";
+// var URL = baseURL + "q&l=" + where[0];
 var URL = setCurrentURL(what, 0);
 
 // q = "what"
@@ -50,13 +75,13 @@ const jobs = [];
 // resultsString will load the value fom Indeed: "Page 1 of n jobs"
 const resultString = "";
 // i will intialize the dowhile loop
-var i = 0;
-// n is the number of pages to be returned
-var n = 1;
+let i = 0;
+
 // begin function
 const jobScrape = async() => {
     try {
         for(industry in what) {
+            i = 0;
             getURL = setCurrentURL(what, industry);
             let thisIndustry = what[industry];
             do {
@@ -65,11 +90,11 @@ const jobScrape = async() => {
                 const response = await
                 axios.get(URL);
                 const html = response.data;
-    
                 const $ = cheerio.load(html);
     
                 // Gets the number of job results (total) and estimates the total number of pages
                 // Un-comment this if you want to scrape every page of job results, but use **caution**.
+                // Also, set n to var instead of const
     
                 /** 
                  * if(i == 0) {
@@ -98,7 +123,7 @@ const jobScrape = async() => {
                         title = title.replace(",", "");
                     }
     
-                    let regex = [/\w+\s?\w*/, /[A-Z][A-Z]/, /\d{5}/];
+                    let regex = [/\w+\.?\s?\w*/, /[A-Z][A-Z]/, /\d{5}/];
     
                     let city = location.match(regex[0]); 
                     if(city) {
@@ -140,6 +165,10 @@ const jobScrape = async() => {
                                 payLow = 0;
                                 payHigh = payArray[2];
                                 payType = payArray[4];
+                            } else if(payArray[0] == "From") {
+                                payLow = payArray[1];
+                                payHigh = payLow;
+                                payType = payArray[payArray.length - 1]
                             } else {
                                 payLow = payArray[0];
                                 payHigh = payArray[2];
