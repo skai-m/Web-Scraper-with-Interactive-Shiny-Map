@@ -1,4 +1,4 @@
-/* Last Updated: 4/16/2022 */
+/* Last Updated: 4/24/2022 */
 
 :root {
     --accent-color: rgb(4, 118, 191);
@@ -23,11 +23,6 @@ div#map1 {
 }
 .navbar {
     margin-bottom: 5px;
-}
-.tab-content {
-    /*background-color: #f8f8f8;
-    border: 1px solid #e7e7e7;
-    padding: 10px 20px;*/
 }
 .form-group {
     margin-bottom: 0px;
@@ -73,6 +68,10 @@ div.container-fluid {
     border-radius: 6px;
     background-color: var(--window-color);
     box-shadow: 2px 0px 5px var(--border-color);
+}
+
+nav > div.container-fluid {
+    padding: 0;
 }
 
 div.container-fluid > div.tab-content {
