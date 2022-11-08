@@ -1,5 +1,5 @@
 # Author: Safiyyah Muhammad
-# Last Updated: 4/24/2022
+# Last Updated: 11/08/2022
 # Name: "app.R"
 # Description:
 # R script to process and clean data from `jobs.csv` and prepare it for
@@ -13,7 +13,7 @@
 # install.packages("janitor")
 
 library(tidyverse)
-library(cleanr)
+#library(cleanr)
 library(janitor)
 library(skimr)
 library(scales)
@@ -39,15 +39,15 @@ jobs <- tibble(read.csv(input, na.strings = "null", skipNul = T, quote = ""))
 jobs <- rbind(jobs, tibble(read.csv("data/more_jobs.csv", na.strings = "null", 
                                     skipNul = T, quote = "")))
 
-jobs2 <- rbind(tibble(read.csv("data/newjobs2.csv", na.strings = "null", skipNul = T, 
-                               quote = "")), tibble(read.csv("data/newjobs3.csv", 
-                                                             na.strings = "null", skipNul = T, quote = "")))
+#**jobs2 <- rbind(tibble(read.csv("data/newjobs2.csv", na.strings = "null", skipNul = T, 
+#*                              quote = "")), tibble(read.csv("data/newjobs3.csv", 
+#**                                                             na.strings = "null", skipNul = T, quote = "")))
 
-names(jobs2) <- names(jobs)
+#*names(jobs2) <- names(jobs)
 
-jobs <- rbind(jobs, jobs2)
+#*jobs <- rbind(jobs, jobs2)
 
-rm(jobs2)
+#*rm(jobs2)
 
 
 
@@ -251,12 +251,7 @@ ui <- navbarPage(useShinyjs(), theme = "style.css",
                    ),
                    tags$span(
                      HTML("<b style=\"color:rgb(4, 118, 191);\">Median salary</b>"),
-                     textOutput("infoSalary"),
-                     HTML("</br>")
-                   ),
-                   tags$span(
-                     HTML("<b style=\"color:rgb(4, 118, 191);\">Highest Paying City</b>"),
-                     textOutput("topCity")
+                     textOutput("infoSalary")
                    )
                    
                    ),
@@ -340,7 +335,6 @@ server <- function(input, output) {
   # Does not update until `update` is clicked
   observeEvent(input$reset, {
     print(dataSalary() == "$35,000 to $64,999")
-    print(input$map1_bounds)
     shinyjs::reset("query")
     shinyjs::reset("salary")
     shinyjs::reset("state")
@@ -376,46 +370,19 @@ server <- function(input, output) {
   
   output$noJobs = renderText({
     info <- data()
-    info <- info %>% 
-      filter(latitude <= input$map1_bounds$north & latitude >= input$map1_bounds$south) %>% 
-      filter(longitude >= input$map1_bounds$west & longitude <= input$map1_bounds$east)
     # infoSalary <- filter(info, salary != 0)
     paste0(nrow(info))
   })
   
   output$infoSalary = renderText({
     sInfo <- data() %>%  filter(salary != 0)
-    sInfo <- sInfo %>% 
-      filter(latitude <= input$map1_bounds$north & latitude >= input$map1_bounds$south) %>% 
-      filter(longitude >= input$map1_bounds$west & longitude <= input$map1_bounds$east)  
     dollar(median(sInfo$salary, na.rm = TRUE))
   })
   
-  output$topCity = renderText({
-    temp <- data() %>%  filter(salary != 0) %>% 
-      filter(latitude <= input$map1_bounds$north & latitude >= input$map1_bounds$south) %>% 
-      filter(longitude >= input$map1_bounds$west & longitude <= input$map1_bounds$east)
-    temp <- head(temp %>%
-      group_by(city, state) %>% 
-      summarize(avg_pay = mean(salary), n_jobs = n()) %>% 
-        filter(n_jobs > 5) %>% 
-      arrange(desc(avg_pay)), n = 1)
-    if(paste0(temp$city, ", ", temp$state) == ", ") {
-      paste0("Not enough data")
-    } else {
-      paste0(temp$city, ", ", temp$state)
-    }
-
-    
-  })
-  
 }
-  
-
-
 
 #**
-#* Define server functions and render Map using Leaflet:
+#* Define server functions and render Map using Leaflet?:
 #* input will include: query term, filter criteria
 
 shinyApp(ui = ui, server = server)
