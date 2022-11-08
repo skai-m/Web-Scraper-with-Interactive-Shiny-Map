@@ -1,8 +1,7 @@
 //###########################################################################################################
 /**
  * Author: Safiyyah Muhammad
- * Last Updated: 04/14/2022
- * CSCI:290 | Final Project
+ * Last Updated: 11/08/2022
  * File Name: "scrape.js"
  
  * About:
@@ -21,6 +20,7 @@
 //###########################################################################################################
 
 // Create a predefined array of search terms [OPTIONAL] and industries to search within:
+// If array is empty, it is the same as searching all jobs...
 const what = ["finance", "business administration", "creative arts", "information technology",
              "agriculture", "healthcare", "education", "government", "retail", "marketing"];
 
@@ -228,6 +228,8 @@ function setCurrentURL(array, index) {
         });
         return newURL + "&l=" + where[0];
 }
+
+/* Create comma separated sheet */
 
 function toStringCsv(arr) {
     const objArray = arr;
